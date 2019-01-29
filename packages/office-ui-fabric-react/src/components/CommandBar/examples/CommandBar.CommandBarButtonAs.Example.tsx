@@ -108,7 +108,30 @@ export class IndividualCommandBarButtonAsExample extends React.Component<IIndivi
               iconProps: {
                 iconName: 'Mail'
               },
-              ['data-automation-id']: 'newEmailButton'
+              ['data-automation-id']: 'newEmailButton',
+              subMenuProps: {
+                items: [
+                  {
+                    key: 'emailMessage 1 ',
+                    name: 'Email message 1 ',
+                    icon: 'Mail'
+                  },
+                  {
+                    key: 'calendarEvent 1',
+                    name: 'Calendar event 1',
+                    icon: 'Calendar',
+                    subMenuProps: {
+                      items: [
+                        {
+                          key: 'emailMessage 3',
+                          name: 'Email message 3',
+                          icon: 'Mail'
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
             },
             {
               key: 'calendarEvent',

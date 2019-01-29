@@ -8,6 +8,7 @@ import { FocusZone, FocusZoneDirection } from '../../FocusZone';
 import { classNamesFunction } from '../../Utilities';
 import { CommandBarButton, IButtonProps } from '../../Button';
 import { TooltipHost } from '../../Tooltip';
+import { IContextualMenuProps } from '../ContextualMenu';
 
 const getClassNames = classNamesFunction<ICommandBarStyleProps, ICommandBarStyles>();
 
@@ -137,12 +138,17 @@ export class CommandBarBase extends BaseComponent<ICommandBarProps, {}> implemen
       allowDisabledFocus: true,
       role: 'menuitem',
       ...item,
-      styles: { root: { height: '100%' }, label: { whiteSpace: 'nowrap' }, ...item.buttonStyles },
-      className: css('ms-CommandBarItem-link', item.className),
-      text: !item.iconOnly ? itemText : undefined,
+      // styles: { root: { height: '100%' }, label: { whiteSpace: 'nowrap' }, ...item.buttonStyles },
+      // className: css('ms-CommandBarItem-link', item.className),
+      // text: !item.iconOnly ? itemText : undefined,
+      text: itemText,
       menuProps: item.subMenuProps,
       onClick: this._onButtonClick(item)
     };
+
+    if (!!item.subMenuProps) {
+      item.subMenuProps = this.setCommandSubMenuItems(item.subMenuProps, item.iconOnly);
+    }
 
     if (item.iconOnly && itemText !== undefined) {
       return (
@@ -153,6 +159,62 @@ export class CommandBarBase extends BaseComponent<ICommandBarProps, {}> implemen
     }
 
     return <CommandButtonType {...commandButtonProps as IButtonProps} defaultRender={CommandBarButton} />;
+  };
+
+  private setCommandSubMenuItems = (subMenuProps: IContextualMenuProps, iconVisible?: boolean): IContextualMenuProps => {
+    subMenuProps.items = subMenuProps.items.map(subMenuItem => {
+      if (!iconVisible) {
+        const CommandButtonType = this.props.buttonAs || subMenuItem.commandBarButtonAs || CommandBarButton;
+        const commandButtonProps: ICommandBarItemProps = {
+          allowDisabledFocus: true,
+          role: 'menuitem',
+          ...subMenuItem,
+          // styles: { root: { height: '100%' }, label: { whiteSpace: 'nowrap' }, ...subMenuItem.buttonStyles },
+          // className: css('ms-ContextualMenu-link', subMenuItem.className),
+          // text: !item.iconOnly ? itemText : undefined,
+          buttonStyles: { rootPressed: { float: 'right' } },
+          text: subMenuItem.text || subMenuItem.name,
+          menuProps: subMenuItem.subMenuProps,
+          onClick: this._onButtonClick(subMenuItem)
+        };
+        subMenuItem.onRender = () => (
+          // <TooltipHost
+          //   content={
+          //     !!subMenuItem.tooltipHostProps && !!subMenuItem.tooltipHostProps.content
+          //       ? subMenuItem.tooltipHostProps.content
+          //       : subMenuItem.name
+          //   }
+          //   calloutProps={{ gapSpace: 0 }}
+          // >
+          //   <CommandBarButton
+          //     role="menuItem"
+          //     disabled={subMenuItem.disabled}
+          //     ariaLabel={subMenuItem.ariaLabel}
+          //     onClick={() => undefined}
+          //     iconProps={subMenuItem.iconProps}
+          //     // className={css('ms-ContextualMenu-linkContent', subMenuItem.className)}
+          //     menuProps={subMenuItem.subMenuProps}
+          //     text={!!subMenuItem.text ? subMenuItem.text : subMenuItem.name}
+          //   />
+          // </TooltipHost>
+          <TooltipHost content={commandButtonProps.text} {...subMenuItem.tooltipHostProps}>
+            <CommandButtonType {...commandButtonProps as IButtonProps} defaultRender={CommandBarButton} />
+          </TooltipHost>
+        );
+      } else {
+        subMenuItem.onRender = undefined;
+      }
+
+      if (!!subMenuItem.subMenuProps) {
+        subMenuItem.subMenuProps = this.setCommandSubMenuItems(subMenuItem.subMenuProps, iconVisible);
+      } else {
+        subMenuItem.subMenuProps = undefined;
+      }
+
+      return subMenuItem;
+    });
+
+    return subMenuProps;
   };
 
   private _onButtonClick(item: ICommandBarItemProps): (ev: React.MouseEvent<HTMLButtonElement>) => void {
